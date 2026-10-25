@@ -6,7 +6,7 @@ from sklearn.metrics import classification_report
 import joblib
 
 def split_data(df, target_col='Churn'):
-    """Train/Val/Test Split பண்றது"""
+    """ Split data into stratified Train, Validation, and Test sets."""
     X = df.drop(target_col, axis=1)
     y = df[target_col]
 
@@ -19,7 +19,7 @@ def split_data(df, target_col='Churn'):
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 def train_xgboost(X_train, y_train, scale_weight):
-    """XGBoost Model-ஐ Best Hyperparameters வச்சு Train பண்றது"""
+    """ Tune hyperparameters and train the XGBoost model using RandomizedSearchCV."""
     param_grid = {
         'n_estimators': [100, 200, 300],
         'max_depth': [3, 5, 7, 10],
@@ -37,6 +37,6 @@ def train_xgboost(X_train, y_train, scale_weight):
     return search.best_estimator_
 
 def save_model(model, path='churnguard/models/xgboost_model.pkl'):
-    """Trained Model-ஐ File-ஆ Save பண்றது"""
+    """ Serialize and save the trained model to disk."""
     joblib.dump(model, path)
     print(f"Model saved to {path}")

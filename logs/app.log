@@ -1,0 +1,6 @@
+2026-10-25 07:41:22,406 - INFO - Model training started
+2026-10-25 07:41:22,407 - WARNING - Found 11 missing values in TotalCharges
+2026-10-25 07:41:22,408 - INFO - Model training completed successfully
+2026-10-25 07:41:22,409 - ERROR - This is a sample error message
+2026-10-25 07:43:20,444 - ERROR - Prediction error: feature_names mismatch: ['SeniorCitizen', 'tenure', 'Contract', 'MonthlyCharges', 'TotalCharges', 'TenureGroup', 'gender_Male', 'Partner_Yes', 'Dependents_Yes', 'PhoneService_Yes', 'MultipleLines_Yes', 'InternetService_Fiber optic', 'InternetService_No', 'OnlineSecurity_Yes', 'OnlineBackup_Yes', 'DeviceProtection_Yes', 'TechSupport_Yes', 'StreamingTV_Yes', 'StreamingMovies_Yes', 'PaperlessBilling_Yes', 'PaymentMethod_Credit card (automatic)', 'PaymentMethod_Electronic check', 'PaymentMethod_Mailed check'] ['tenure', 'MonthlyCharges', 'TotalCharges', 'Contract']
+expected Partner_Yes, StreamingMovies_Yes, OnlineSecurity_Yes, PaymentMethod_Mailed check, PhoneService_Yes, StreamingTV_Yes, PaymentMethod_Electronic check, gender_Male, Dependents_Yes, MultipleLines_Yes, OnlineBackup_Yes, InternetService_Fiber optic, InternetService_No, TenureGroup, DeviceProtection_Yes, PaymentMethod_Credit card (automatic), SeniorCitizen, PaperlessBilling_Yes, TechSupport_Yes in input data

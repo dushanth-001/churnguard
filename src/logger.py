@@ -1,0 +1,18 @@
+
+import logging
+import os
+
+def setup_logger():
+    """Logging Setup பண்றது - File-லயும், Console-லயும் Log காட்டும்"""
+
+    os.makedirs('logs', exist_ok=True)
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('logs/app.log'),
+            logging.StreamHandler()
+        ]
+    )
+    return logging.getLogger(__name__)

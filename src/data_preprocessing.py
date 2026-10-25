@@ -3,12 +3,12 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 
 def load_data(url):
-    """Dataset-ஐ URL-ல இருந்து Load பண்றது"""
+    """ Load dataset from the specified URL."""
     df = pd.read_csv(url)
     return df
 
 def clean_data(df):
-    """Missing Values Fix பண்றது, TotalCharges Convert பண்றது"""
+    """ Clean data by converting TotalCharges to numeric and handling missing values."""
     df['TotalCharges'] = pd.to_numeric(df['TotalCharges'], errors='coerce')
     df['TotalCharges'] = df['TotalCharges'].fillna(0)
     return df
@@ -36,7 +36,7 @@ def engineer_features(df):
     return df
 
 def preprocess_data(df, cols_to_scale):
-    """Scaling Apply பண்றது"""
+    """ Apply standard feature scaling to continuous numerical columns."""
     scaler = StandardScaler()
     df[cols_to_scale] = scaler.fit_transform(df[cols_to_scale])
     return df, scaler
