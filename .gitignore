@@ -2,3 +2,8 @@ data/raw/*.csv
 *.pkl
 __pycache__/
 .ipynb_checkpoints/
+
+logs/
+mlflow.db
+mlruns/
+*.db
