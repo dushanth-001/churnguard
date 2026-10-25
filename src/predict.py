@@ -7,7 +7,7 @@ from logger import setup_logger
 logger = setup_logger()
 
 def load_model(model_path='models/xgboost_model.pkl'):
-    """Model-ஐ Safe-ஆ Load பண்றது"""
+    """ Safely load a serialized model file with exception handling and logging."""
     try:
         model = joblib.load(model_path)
         logger.info(f"Model loaded successfully from {model_path}")

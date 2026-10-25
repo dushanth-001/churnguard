@@ -3,7 +3,7 @@ import logging
 import os
 
 def setup_logger():
-    """Logging Setup பண்றது - File-லயும், Console-லயும் Log காட்டும்"""
+    """ Configure centralized logger to stream to console and persist to logs/app.log."""
 
     os.makedirs('logs', exist_ok=True)
 
