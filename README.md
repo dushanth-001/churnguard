@@ -83,8 +83,6 @@ Example response (values for the sample request):
 ```
 
 ## Project structure
-
-```text
 app.py                               FastAPI application
 src/
 ├── data_preprocessing.py            Cleaning and feature engineering
@@ -98,7 +96,7 @@ examples/                            Sample API request
 .github/workflows/                   CI pipeline
 Dockerfile
 config.yaml                          Settings reference
-metrics.json                         Latest test-set metrics 
+metrics.json                         Latest test-set metrics
 
 
 ## Testing and CI
