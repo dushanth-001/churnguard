@@ -84,20 +84,21 @@ Example response (values for the sample request):
 
 ## Project structure
 
-app.py FastAPI application
+```text
+app.py                               FastAPI application
 src/
-  data_preprocessing.py cleaning and feature engineering
-  train.py training and tuning functions
-  evaluate.py test-set evaluation, writes metrics.json
-  predict.py model loading and prediction helpers
-  logger.py logging setup
-models/ trained model and scaler
-tests/ unit tests and API tests
-examples/ sample API request
-.github/workflows/ CI pipeline
+├── data_preprocessing.py            Cleaning and feature engineering
+├── train.py                         Training and tuning functions
+├── evaluate.py                      Test-set evaluation, writes metrics.json
+├── predict.py                       Model loading and prediction helpers
+└── logger.py                        Logging setup
+models/                              Trained model and scaler
+tests/                               Unit tests and API tests
+examples/                            Sample API request
+.github/workflows/                   CI pipeline
 Dockerfile
-config.yaml settings reference (not yet wired into the scripts)
-metrics.json latest test-set metrics
+config.yaml                          Settings reference
+metrics.json                         Latest test-set metrics 
 
 
 ## Testing and CI
