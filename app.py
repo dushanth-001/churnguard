@@ -1,6 +1,9 @@
+import json
 import os
-import sys
 import secrets
+import sys
+import threading
+import time
 from typing import Annotated
 
 import joblib
@@ -19,6 +22,44 @@ model = joblib.load(os.path.join(BASE_DIR, 'models', 'xgboost_model.pkl'))
 
 API_KEY = os.environ.get("API_KEY")
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+
+class Stats:
+    """In-memory request counters. They reset when the container restarts or scales to zero."""
+
+    def __init__(self):
+        self._lock = threading.Lock()
+        self._started = time.time()
+        self.requests = 0
+        self.errors = 0
+        self.positives = 0
+        self._latency_sum = 0.0
+        self._latency_max = 0.0
+
+    def record(self, latency_ms, prediction=None, error=False):
+        with self._lock:
+            self.requests += 1
+            self._latency_sum += latency_ms
+            self._latency_max = max(self._latency_max, latency_ms)
+            if error:
+                self.errors += 1
+            elif prediction == 1:
+                self.positives += 1
+
+    def snapshot(self):
+        with self._lock:
+            ok = self.requests - self.errors
+            return {
+                "uptime_seconds": round(time.time() - self._started, 1),
+                "requests": self.requests,
+                "errors": self.errors,
+                "predicted_churn_rate": round(self.positives / ok, 4) if ok else None,
+                "avg_latency_ms": round(self._latency_sum / self.requests, 2) if self.requests else None,
+                "max_latency_ms": round(self._latency_max, 2),
+            }
+
+
+stats = Stats()
 
 
 def verify_api_key(key: str = Security(api_key_header)):
@@ -62,19 +103,36 @@ def home():
     return {"message": "ChurnGuard API is running!"}
 
 
+@app.get("/stats", dependencies=[Depends(verify_api_key)])
+def get_stats():
+    return stats.snapshot()
+
+
 @app.post("/predict", dependencies=[Depends(verify_api_key)])
 def predict(data: CustomerData):
+    start = time.perf_counter()
     try:
         d = data.model_dump()
+        numeric = {k: d[k] for k in ("tenure", "MonthlyCharges", "TotalCharges", "Contract")}
         d['InternetService_Fiber optic'] = d.pop('InternetService_Fiber_optic')
         d['PaymentMethod_Credit card (automatic)'] = d.pop('PaymentMethod_Credit_card')
         d['PaymentMethod_Electronic check'] = d.pop('PaymentMethod_Electronic_check')
         d['PaymentMethod_Mailed check'] = d.pop('PaymentMethod_Mailed_check')
         input_df = pd.DataFrame([d])[model.feature_names_in_]
-        prediction = model.predict(input_df)[0]
-        probability = model.predict_proba(input_df)[0][1]
-        logger.info(f"Prediction made: {prediction}, Probability: {probability}")
-        return {"churn_prediction": int(prediction), "churn_probability": float(probability)}
+        prediction = int(model.predict(input_df)[0])
+        probability = float(model.predict_proba(input_df)[0][1])
     except Exception as e:
-        logger.error(f"Prediction error: {str(e)}")
+        stats.record((time.perf_counter() - start) * 1000, error=True)
+        logger.error(json.dumps({"event": "prediction_error", "error": str(e)}))
         raise HTTPException(status_code=500, detail="Prediction failed")
+
+    latency_ms = (time.perf_counter() - start) * 1000
+    stats.record(latency_ms, prediction=prediction)
+    logger.info(json.dumps({
+        "event": "prediction",
+        "prediction": prediction,
+        "probability": round(probability, 4),
+        "latency_ms": round(latency_ms, 2),
+        **numeric,
+    }))
+    return {"churn_prediction": prediction, "churn_probability": probability}

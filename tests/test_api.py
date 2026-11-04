@@ -8,6 +8,7 @@ from fastapi.testclient import TestClient
 from app import app
 
 client = TestClient(app)
+HEADERS = {"X-API-Key": "test-key"}
 
 PAYLOAD = {
     "SeniorCitizen": 0, "tenure": -1.2, "Contract": 0, "MonthlyCharges": 1.5,
@@ -35,7 +36,7 @@ def test_predict_rejects_wrong_key():
 
 
 def test_predict_with_valid_key():
-    r = client.post("/predict", json=PAYLOAD, headers={"X-API-Key": "test-key"})
+    r = client.post("/predict", json=PAYLOAD, headers=HEADERS)
     assert r.status_code == 200
     body = r.json()
     assert body["churn_prediction"] in (0, 1)
@@ -44,5 +45,20 @@ def test_predict_with_valid_key():
 
 def test_predict_rejects_invalid_input():
     bad = dict(PAYLOAD, gender_Male=5)
-    r = client.post("/predict", json=bad, headers={"X-API-Key": "test-key"})
+    r = client.post("/predict", json=bad, headers=HEADERS)
     assert r.status_code == 422
+
+
+def test_stats_requires_key():
+    assert client.get("/stats").status_code == 401
+
+
+def test_stats_counts_predictions():
+    client.post("/predict", json=PAYLOAD, headers=HEADERS)
+    r = client.get("/stats", headers=HEADERS)
+    assert r.status_code == 200
+    body = r.json()
+    assert body["requests"] >= 1
+    assert body["errors"] == 0
+    assert 0.0 <= body["predicted_churn_rate"] <= 1.0
+    assert body["avg_latency_ms"] > 0
