@@ -107,16 +107,23 @@ Every push to `main` runs three jobs in GitHub Actions:
 2. `docker`: builds the image, starts the container and checks that the API responds.
 3. `publish`: pushes the image to GitHub Container Registry (only after the first two pass).
 
+## Monitoring and drift detection
+
+- Every prediction is logged as one JSON line (prediction, probability, latency and four numeric inputs). No customer identifiers are logged.
+- `GET /stats` (API key required) returns in-memory request counts, error count, predicted churn rate and latency. These counters reset when the container restarts or scales to zero.
+- `python src/drift.py --logs <exported log file>` compares logged inputs and predicted probabilities with a reference sample from the validation set (`models/reference.csv`), using the Population Stability Index (PSI) and a KS test. A feature with PSI of 0.25 or more is flagged as drifted, and at least 100 logged predictions are required.
+- This is a script run on exported logs, not an automatic alert. It is unit-tested on synthetic data and has not been run on real production traffic.
+
 ## Limitations
 
 - The data is the public IBM Telco dataset, not real company data.
 - The decision threshold is fixed at 0.5. With real cost figures for a missed churner and a retention offer, the threshold should be chosen from those costs.
 - The API expects already-encoded features, and `tenure`, `MonthlyCharges` and `TotalCharges` must already be standardised. A production version would accept raw customer fields and apply the saved scaler inside the service.
-- The model was trained once. There is no drift monitoring or automated retraining yet.
+- The model was trained once. Drift detection is a manual script, and there is no automated retraining yet.
 - The demo deployment runs on a free-tier plan that scales to zero, so the first request after idle time is slow.
 
 ## Roadmap
 
-- Drift monitoring and scheduled retraining
+- Automated drift alerts and scheduled retraining
 - A prediction endpoint that accepts raw customer fields
 - Threshold selection from business cost data
