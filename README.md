@@ -114,16 +114,27 @@ Every push to `main` runs three jobs in GitHub Actions:
 - `python src/drift.py --logs <exported log file>` compares logged inputs and predicted probabilities with a reference sample from the validation set (`models/reference.csv`), using the Population Stability Index (PSI) and a KS test. A feature with PSI of 0.25 or more is flagged as drifted, and at least 100 logged predictions are required.
 - This is a script run on exported logs, not an automatic alert. It is unit-tested on synthetic data and has not been run on real production traffic.
 
+## Retraining pipeline
+
+`.github/workflows/retrain.yml` is triggered manually (Actions, Run workflow, optionally with a CSV URL that has the same columns as the training data). It runs `src/retrain.py`, which:
+
+1. trains a candidate XGBoost model on the data (same hyperparameters, scaler fitted on the training split only);
+2. scores the candidate and the current model on the same held-out test split;
+3. applies a promotion gate: the candidate is rejected if recall or ROC AUC drops by more than 0.02, and nothing is promoted if the two models are equivalent (within 0.001);
+4. if the candidate passes, pushes a `retrain/run-<id>` branch with the new model, scaler, drift reference sample and metrics. A person reviews and merges the pull request, which triggers CI and image publishing.
+
+On the public static dataset the candidate equals the current model, so the expected result is `no_change`. The pipeline has not been run on genuinely new data, and deploying a merged model to Azure is still a manual step.
+
 ## Limitations
 
 - The data is the public IBM Telco dataset, not real company data.
 - The decision threshold is fixed at 0.5. With real cost figures for a missed churner and a retention offer, the threshold should be chosen from those costs.
 - The API expects already-encoded features, and `tenure`, `MonthlyCharges` and `TotalCharges` must already be standardised. A production version would accept raw customer fields and apply the saved scaler inside the service.
-- The model was trained once. Drift detection is a manual script, and there is no automated retraining yet.
+- Retraining is a manually triggered workflow with a promotion gate. It has not been exercised on genuinely new data.
 - The demo deployment runs on a free-tier plan that scales to zero, so the first request after idle time is slow.
 
 ## Roadmap
 
-- Automated drift alerts and scheduled retraining
+- Automated drift alerts and scheduled retraining on real incoming data
 - A prediction endpoint that accepts raw customer fields
 - Threshold selection from business cost data
