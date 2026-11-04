@@ -7,18 +7,19 @@ import time
 from typing import Annotated
 
 import joblib
-import pandas as pd
 from fastapi import Depends, FastAPI, HTTPException, Security
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, Field
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(BASE_DIR, 'src'))
+from inference import Predictor
 from logger import setup_logger
 
 app = FastAPI(title="ChurnGuard API")
 logger = setup_logger()
 model = joblib.load(os.path.join(BASE_DIR, 'models', 'xgboost_model.pkl'))
+predictor = Predictor(model)
 
 API_KEY = os.environ.get("API_KEY")
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
@@ -114,13 +115,7 @@ def predict(data: CustomerData):
     try:
         d = data.model_dump()
         numeric = {k: d[k] for k in ("tenure", "MonthlyCharges", "TotalCharges", "Contract")}
-        d['InternetService_Fiber optic'] = d.pop('InternetService_Fiber_optic')
-        d['PaymentMethod_Credit card (automatic)'] = d.pop('PaymentMethod_Credit_card')
-        d['PaymentMethod_Electronic check'] = d.pop('PaymentMethod_Electronic_check')
-        d['PaymentMethod_Mailed check'] = d.pop('PaymentMethod_Mailed_check')
-        input_df = pd.DataFrame([d])[model.feature_names_in_]
-        prediction = int(model.predict(input_df)[0])
-        probability = float(model.predict_proba(input_df)[0][1])
+        prediction, probability = predictor.predict_one(d)
     except Exception as e:
         stats.record((time.perf_counter() - start) * 1000, error=True)
         logger.error(json.dumps({"event": "prediction_error", "error": str(e)}))

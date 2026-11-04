@@ -125,6 +125,20 @@ Every push to `main` runs three jobs in GitHub Actions:
 
 On the public static dataset the candidate equals the current model, so the expected result is `no_change`. The pipeline has not been run on genuinely new data, and deploying a merged model to Azure is still a manual step.
 
+## Performance
+
+Single-request model inference, measured with `python src/benchmark.py` (1000 calls per approach, Python 3.13.18, XGBoost 3.4.1, on a Google Colab CPU; numbers depend on the machine):
+
+| Approach | Median (ms) | p95 (ms) |
+|---|---|---|
+| Original: DataFrame, predict and predict_proba (two model calls) | 12.278 | 52.119 |
+| DataFrame, one predict_proba call | 4.728 | 5.621 |
+| NumPy array, Booster.inplace_predict | 0.333 | 0.402 |
+
+The service uses `numpy_booster`. Over 1000 random inputs it gives the same labels as the original (label mismatches: 0, largest probability difference: 0.0).
+
+Loading the model takes about 20.6 ms. These figures cover the model call only. Request parsing, the network and the cold start of a scaled-to-zero container are not included, and the cold start has not been optimised.
+
 ## Limitations
 
 - The data is the public IBM Telco dataset, not real company data.
