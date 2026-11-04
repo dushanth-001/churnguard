@@ -152,3 +152,17 @@ Loading the model takes about 20.6 ms. These figures cover the model call only. 
 - Automated drift alerts and scheduled retraining on real incoming data
 - A prediction endpoint that accepts raw customer fields
 - Threshold selection from business cost data
+
+
+## Performance & Production Benchmark
+
+Production latency and server-side metrics verified on Azure Container Apps:
+
+| Metric | Measured Value | Description |
+|---|---|---|
+| **Server Inference Latency (avg)** | `6.79 ms` | True model execution time per request (/stats) |
+| **Server Max Latency** | `11.55 ms` | Maximum server-side response latency |
+| **Client Round-Trip (p50)** | `1292 ms` | Network transit (Colab client to Azure UAE North) |
+| **Client Round-Trip (p95)** | `1315 ms` | 95th percentile network round-trip |
+| **Cold Start** | `4377 ms` | Initial container initialization from scale-to-zero |
+| **Success Rate** | `100% (31/31 requests)` | Zero errors encountered during load benchmark |
